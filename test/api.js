@@ -2,6 +2,7 @@
 
 var should = require('should');
 var BrowserStack = require('../lib/browserstack');
+var extend = require('../lib/extend');
 
 var username = process.env.BROWSERSTACK_USERNAME;
 var password = process.env.BROWSERSTACK_KEY;
@@ -355,13 +356,6 @@ function validateWorker(w) {
   w.id.should.match(/\d+/);
 }
 
-function copyObject(o, dest) {
-  return Object.keys(o).reduce(function(prev, k) {
-    prev[k] = o[k];
-    return prev;
-  }, dest || {});
-}
-
 function merge(o, a) {
-  return copyObject(a, copyObject(o));
+  return extend(extend({}, o), a);
 }
