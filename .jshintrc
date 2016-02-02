@@ -17,5 +17,11 @@
 	"globals": {
 		"define": false,
 		"PointerEvent": true
-	}
+	},
+
+	"predef": [
+		"describe",
+		"it",
+		"before"
+	]
 }
