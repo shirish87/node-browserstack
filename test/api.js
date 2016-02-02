@@ -15,11 +15,19 @@ describe('BrowserStack API', function() {
   this.timeout(10000);
 
   var client;
+  var workers = [];
 
-  before(function() {
+  beforeEach(function() {
     client = BrowserStack.createClient({
       username: username,
       password: password
+    });
+  });
+
+  afterEach(function(done) {
+    terminateWorkers(client, workers, function () {
+      workers = [];
+      done();
     });
   });
 
@@ -123,6 +131,7 @@ describe('BrowserStack API', function() {
         should.ifError(err);
 
         validateWorker(worker);
+        workers.push(worker);
         done(err);
       });
     });
@@ -150,6 +159,7 @@ describe('BrowserStack API', function() {
         should.ifError(err);
 
         validateWorker(worker);
+        workers.push(worker);
         done(err);
       });
     });
@@ -161,6 +171,7 @@ describe('BrowserStack API', function() {
         should.ifError(err);
 
         validateWorker(worker);
+        workers.push(worker);
         done(err);
       });
     });
@@ -186,6 +197,7 @@ describe('BrowserStack API', function() {
         should.ifError(err);
 
         validateWorker(worker);
+        workers.push(worker);
 
         client.getWorker(worker.id, function(err, worker2) {
           should.ifError(err);
@@ -217,6 +229,7 @@ describe('BrowserStack API', function() {
         should.ifError(err);
 
         validateWorker(worker);
+        workers.push(worker);
 
         client.terminateWorker(worker.id, function(err, data) {
           should.ifError(err);
@@ -248,6 +261,7 @@ describe('BrowserStack API', function() {
         should.ifError(err);
 
         validateWorker(worker);
+        workers.push(worker);
 
         pollWorker(client, worker, function(err, isRunning) {
           if (isRunning) {
@@ -277,6 +291,7 @@ describe('BrowserStack API', function() {
       }), function(err, worker) {
         should.ifError(err);
         validateWorker(worker);
+        workers.push(worker);
 
         pollWorker(client, worker, function(err, isRunning) {
           if (isRunning) {
@@ -303,6 +318,26 @@ describe('BrowserStack API', function() {
 
   });
 });
+
+function terminateWorkers(client, workers, callback) {
+  if (!workers.length) {
+    return callback(null);
+  }
+
+  if (workers[0].id) {
+    workers = workers.map(function(w) {
+      return w.id;
+    });
+  };
+
+  client.terminateWorker(workers.shift(), function(err) {
+    if (!workers.length) {
+      return callback(null);
+    }
+
+    terminateWorkers(client, workers, callback);
+  });
+}
 
 function pollWorker(client, worker, callback) {
   var maxRetries = 10;
