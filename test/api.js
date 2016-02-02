@@ -25,7 +25,7 @@ describe('BrowserStack API', function() {
   });
 
   afterEach(function(done) {
-    terminateWorkers(client, workers, function () {
+    terminateWorkers(client, workers, function() {
       workers = [];
       done();
     });
@@ -210,15 +210,26 @@ describe('BrowserStack API', function() {
     });
 
     it('should fetch list of workers', function(done) {
-      client.getWorkers(function(err, workers) {
+      client.createWorker(merge(sampleDeviceBrowser, {
+        url: 'http://www.example.com'
+      }), function(err, worker) {
         should.ifError(err);
 
-        workers.should.be.an.Array().and.not.be.empty();
-        workers.forEach(function(w) {
-          w.id.should.match(/\d+/);
-        });
+        validateWorker(worker);
+        workers.push(worker);
 
-        done();
+        client.getWorkers(function(err, workers) {
+          should.ifError(err);
+
+          workers.should.be.an.Array().and.not.be.empty();
+
+          var workerExists = workers.filter(function(w) {
+            validateWorker(w);
+            return (w.id === worker.id);
+          }).shift();
+
+          done(workerExists ? null : new Error('failed to fetch created worker'));
+        });
       });
     });
 
@@ -297,6 +308,8 @@ describe('BrowserStack API', function() {
           if (isRunning) {
 
             // wait for page load
+            var pageLoadTime = 5000;
+
             return setTimeout(function() {
               client.takeScreenshot(worker.id, function(err, data) {
                 should.ifError(err);
@@ -306,7 +319,7 @@ describe('BrowserStack API', function() {
 
                 done(err);
               });
-            }, 5000);
+            }, pageLoadTime);
           }
 
           should.ifError(err);
@@ -328,9 +341,9 @@ function terminateWorkers(client, workers, callback) {
     workers = workers.map(function(w) {
       return w.id;
     });
-  };
+  }
 
-  client.terminateWorker(workers.shift(), function(err) {
+  client.terminateWorker(workers.shift(), function() {
     if (!workers.length) {
       return callback(null);
     }
