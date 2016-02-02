@@ -2,7 +2,7 @@
 
 var should = require('should');
 var BrowserStack = require('../lib/browserstack');
-var extend = require('../lib/extend');
+var util = require('./util');
 
 var username = process.env.BROWSERSTACK_USERNAME;
 var password = process.env.BROWSERSTACK_KEY;
@@ -25,7 +25,7 @@ describe('BrowserStack API', function() {
   });
 
   afterEach(function(done) {
-    terminateWorkers(client, workers, function() {
+    util.terminateWorkers(client, workers, function() {
       workers = [];
       done();
     });
@@ -54,7 +54,7 @@ describe('BrowserStack API', function() {
         should.ifError(err);
 
         browsers.should.be.an.Array().and.not.be.empty();
-        browsers.map(validateBrowserObject);
+        browsers.map(util.validateBrowserObject);
 
         done(err);
       });
@@ -125,19 +125,19 @@ describe('BrowserStack API', function() {
     };
 
     it('should create worker', function(done) {
-      client.createWorker(merge(sampleDesktopBrowser, {
+      client.createWorker(util.merge(sampleDesktopBrowser, {
         url: 'http://www.example.com'
       }), function(err, worker) {
         should.ifError(err);
 
-        validateWorker(worker);
+        util.validateWorker(worker);
         workers.push(worker);
         done(err);
       });
     });
 
     it('should fail to create worker for invalid browser', function(done) {
-      client.createWorker(merge(sampleDesktopBrowser, {
+      client.createWorker(util.merge(sampleDesktopBrowser, {
         url: 'http://www.example.com',
         browser: 'mosaic'
       }), function(err, worker) {
@@ -150,7 +150,7 @@ describe('BrowserStack API', function() {
     });
 
     it('should create a worker with details', function(done) {
-      client.createWorker(merge(sampleDesktopBrowser, {
+      client.createWorker(util.merge(sampleDesktopBrowser, {
         url: 'http://www.example.com',
         name: 'worker-1',
         build: 'build-1',
@@ -158,26 +158,26 @@ describe('BrowserStack API', function() {
       }), function(err, worker) {
         should.ifError(err);
 
-        validateWorker(worker);
+        util.validateWorker(worker);
         workers.push(worker);
         done(err);
       });
     });
 
     it('should create a worker for a device browser', function(done) {
-      client.createWorker(merge(sampleDeviceBrowser, {
+      client.createWorker(util.merge(sampleDeviceBrowser, {
         url: 'http://www.example.com'
       }), function(err, worker) {
         should.ifError(err);
 
-        validateWorker(worker);
+        util.validateWorker(worker);
         workers.push(worker);
         done(err);
       });
     });
 
     it('should fail to create worker for invalid device', function(done) {
-      client.createWorker(merge(sampleDeviceBrowser, {
+      client.createWorker(util.merge(sampleDeviceBrowser, {
         url: 'http://www.example.com',
         device: 'Nexus 5S'
       }), function(err, worker) {
@@ -191,18 +191,18 @@ describe('BrowserStack API', function() {
     });
 
     it('should get created worker by id', function(done) {
-      client.createWorker(merge(sampleDeviceBrowser, {
+      client.createWorker(util.merge(sampleDeviceBrowser, {
         url: 'http://www.example.com'
       }), function(err, worker) {
         should.ifError(err);
 
-        validateWorker(worker);
+        util.validateWorker(worker);
         workers.push(worker);
 
         client.getWorker(worker.id, function(err, worker2) {
           should.ifError(err);
 
-          validateWorker(worker2);
+          util.validateWorker(worker2);
           should.equal(worker.id, worker2.id, 'Worker id mismatch');
           done(err);
         });
@@ -210,12 +210,12 @@ describe('BrowserStack API', function() {
     });
 
     it('should fetch list of workers', function(done) {
-      client.createWorker(merge(sampleDeviceBrowser, {
+      client.createWorker(util.merge(sampleDeviceBrowser, {
         url: 'http://www.example.com'
       }), function(err, worker) {
         should.ifError(err);
 
-        validateWorker(worker);
+        util.validateWorker(worker);
         workers.push(worker);
 
         client.getWorkers(function(err, workers) {
@@ -224,7 +224,7 @@ describe('BrowserStack API', function() {
           workers.should.be.an.Array().and.not.be.empty();
 
           var workerExists = workers.filter(function(w) {
-            validateWorker(w);
+            util.validateWorker(w);
             return (w.id === worker.id);
           }).shift();
 
@@ -234,12 +234,12 @@ describe('BrowserStack API', function() {
     });
 
     it('should terminate a worker by id', function(done) {
-      client.createWorker(merge(sampleDeviceBrowser, {
+      client.createWorker(util.merge(sampleDeviceBrowser, {
         url: 'http://www.example.com'
       }), function(err, worker) {
         should.ifError(err);
 
-        validateWorker(worker);
+        util.validateWorker(worker);
         workers.push(worker);
 
         client.terminateWorker(worker.id, function(err, data) {
@@ -266,15 +266,15 @@ describe('BrowserStack API', function() {
     };
 
     it('should change worker url', function(done) {
-      client.createWorker(merge(sampleDesktopBrowser, {
+      client.createWorker(util.merge(sampleDesktopBrowser, {
         url: 'http://www.example.com'
       }), function(err, worker) {
         should.ifError(err);
 
-        validateWorker(worker);
+        util.validateWorker(worker);
         workers.push(worker);
 
-        pollWorker(client, worker, function(err, isRunning) {
+        util.pollWorker(client, worker, function(err, isRunning) {
           if (isRunning) {
             return client.changeUrl(worker.id, {
               url: 'http://www.example.net',
@@ -297,14 +297,14 @@ describe('BrowserStack API', function() {
     });
 
     it('should take screenshot of worker session', function(done) {
-      client.createWorker(merge(sampleDesktopBrowser, {
+      client.createWorker(util.merge(sampleDesktopBrowser, {
         url: 'http://www.example.com'
       }), function(err, worker) {
         should.ifError(err);
-        validateWorker(worker);
+        util.validateWorker(worker);
         workers.push(worker);
 
-        pollWorker(client, worker, function(err, isRunning) {
+        util.pollWorker(client, worker, function(err, isRunning) {
           if (isRunning) {
 
             // wait for page load
@@ -331,79 +331,3 @@ describe('BrowserStack API', function() {
 
   });
 });
-
-function terminateWorkers(client, workers, callback) {
-  if (!workers.length) {
-    return callback(null);
-  }
-
-  if (workers[0].id) {
-    workers = workers.map(function(w) {
-      return w.id;
-    });
-  }
-
-  client.terminateWorker(workers.shift(), function() {
-    if (!workers.length) {
-      return callback(null);
-    }
-
-    terminateWorkers(client, workers, callback);
-  });
-}
-
-function pollWorker(client, worker, callback) {
-  var maxRetries = 10;
-  var retryInterval = 2000;
-  var timer;
-
-  var pollWorkerState = function(id, callback) {
-    maxRetries--;
-
-    if (--maxRetries < 1) {
-      clearTimeout(timer);
-      return callback(null, false);
-    }
-
-    client.getWorker(id, function(err, worker) {
-      if (err || !worker.id) {
-        clearTimeout(timer);
-        return callback(null, false);
-      }
-
-      if (worker.status && worker.status === 'running') {
-        return callback(null, true);
-      }
-
-      setTimeout(function() {
-        pollWorkerState(id, callback);
-      }, retryInterval);
-    });
-  };
-
-  pollWorkerState(worker.id, callback);
-}
-
-function validateBrowserObject(b) {
-  [
-    'os',
-    'os_version',
-    'browser',
-    b.device ? 'device' : 'browser_version'
-  ].forEach(function(attr) {
-    if (attr.match(/version/)) {
-      b[attr].should.be.a.String().and.match(/\S+/);
-    } else {
-      b[attr].should.be.a.String().and.match(/^[a-zA-Z]+/);
-    }
-  });
-}
-
-function validateWorker(w) {
-  w.should.be.an.Object();
-  w.id.should.match(/\d+/);
-}
-
-function merge(o, a) {
-  return extend(extend({}, o), a);
-}
