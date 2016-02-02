@@ -28,7 +28,7 @@
     "jscs-fix": "jscs lib/* test/* --fix",
     "jshint": "jshint lib/* test/*",
     "lint": "npm run jscs && npm run jshint",
-    "test": "npm run lint"
+    "test": "npm run lint && mocha"
   },
   "keywords": [
     "automation",
