@@ -2,7 +2,7 @@
 
 var extend = require('../lib/extend');
 
-var pollWorkerRetries = 50;
+var pollWorkerRetries = 30;
 var pollWorkerRetryInterval = 2000;
 
 module.exports.terminateWorkers = function terminateWorkers(client, workers, callback) {
