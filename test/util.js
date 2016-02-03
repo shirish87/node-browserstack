@@ -2,6 +2,9 @@
 
 var extend = require('../lib/extend');
 
+var pollWorkerRetries = 50;
+var pollWorkerRetryInterval = 2000;
+
 module.exports.terminateWorkers = function terminateWorkers(client, workers, callback) {
   if (!workers.length) {
     return callback(null);
@@ -22,36 +25,26 @@ module.exports.terminateWorkers = function terminateWorkers(client, workers, cal
   });
 };
 
-module.exports.pollWorker = function pollWorker(client, worker, callback) {
-  var maxRetries = 10;
-  var retryInterval = 2000;
-  var timer;
+module.exports.pollApiWorker = function pollApiWorker(client, worker, callback) {
+  pollWorker(worker,
+    client.getWorker.bind(client),
+    function getWorkerId(worker) {
+      return worker && worker.id;
+    },
+    function isWorkerRunning(worker) {
+      return worker && worker.status === 'running';
+    }, callback);
+};
 
-  var pollWorkerState = function(id, callback) {
-    maxRetries--;
-
-    if (--maxRetries < 1) {
-      clearTimeout(timer);
-      return callback(null, false);
-    }
-
-    client.getWorker(id, function(err, worker) {
-      if (err || !worker.id) {
-        clearTimeout(timer);
-        return callback(null, false);
-      }
-
-      if (worker.status && worker.status === 'running') {
-        return callback(null, true);
-      }
-
-      setTimeout(function() {
-        pollWorkerState(id, callback);
-      }, retryInterval);
-    });
-  };
-
-  pollWorkerState(worker.id, callback);
+module.exports.pollScreenshotWorker = function pollScreenshotWorker(client, worker, callback) {
+  pollWorker(worker,
+    client.getJob.bind(client),
+    function getWorkerId(worker) {
+      return worker && (worker.job_id || worker.id);
+    },
+    function isWorkerRunning(worker) {
+      return worker && worker.state === 'running';
+    }, callback);
 };
 
 module.exports.validateBrowserObject = function validateBrowserObject(b) {
@@ -67,13 +60,49 @@ module.exports.validateBrowserObject = function validateBrowserObject(b) {
       b[attr].should.be.a.String().and.match(/^[a-zA-Z]+/);
     }
   });
+
+  return b;
 };
 
 module.exports.validateWorker = function validateWorker(w) {
   w.should.be.an.Object();
   w.id.should.match(/\d+/);
+  return w;
 };
 
 module.exports.merge = function merge(o, a) {
   return extend(extend({}, o), a);
+};
+
+function pollWorker(worker, getWorkerStatusFn, getWorkerIdFn, isWorkerRunningFn, callback) {
+  var maxRetries = pollWorkerRetries;
+  var retryInterval = pollWorkerRetryInterval;
+  var workerId = getWorkerIdFn(worker);
+  var timer;
+
+  var pollWorkerState = function(id, callback) {
+    if (--maxRetries < 1) {
+      clearTimeout(timer);
+      return callback(null, false);
+    }
+
+    getWorkerStatusFn(workerId, function(err, worker) {
+      workerId = getWorkerIdFn(worker);
+
+      if (err || !workerId) {
+        clearTimeout(timer);
+        return callback(err, false);
+      }
+
+      if (isWorkerRunningFn(worker)) {
+        return callback(null, true);
+      }
+
+      setTimeout(function() {
+        pollWorkerState(id, callback);
+      }, retryInterval);
+    });
+  };
+
+  pollWorkerState(workerId, callback);
 };

@@ -274,7 +274,7 @@ describe('BrowserStack API', function() {
         util.validateWorker(worker);
         workers.push(worker);
 
-        util.pollWorker(client, worker, function(err, isRunning) {
+        util.pollApiWorker(client, worker, function(err, isRunning) {
           if (isRunning) {
             return client.changeUrl(worker.id, {
               url: 'http://www.example.net',
@@ -304,7 +304,7 @@ describe('BrowserStack API', function() {
         util.validateWorker(worker);
         workers.push(worker);
 
-        util.pollWorker(client, worker, function(err, isRunning) {
+        util.pollApiWorker(client, worker, function(err, isRunning) {
           if (isRunning) {
 
             // wait for page load
