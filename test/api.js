@@ -12,7 +12,7 @@ if (!username || !password) {
 }
 
 describe('BrowserStack API', function() {
-  this.timeout(10000);
+  this.timeout(60000); // 60s
 
   var client;
   var workers = [];
