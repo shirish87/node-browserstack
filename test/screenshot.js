@@ -37,7 +37,7 @@ describe('Screenshot API', function() {
   it('should generate screenshots for multiple browsers', function(done) {
     var options = {
       url: 'http://www.example.com',
-      browsers: [ '40.0', '41.0', '42.0' ].map(function(v) {
+      browsers: ['40.0', '41.0', '42.0'].map(function(v) {
         return {
           os: 'Windows',
           os_version: '7',

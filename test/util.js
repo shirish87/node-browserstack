@@ -105,4 +105,4 @@ function pollWorker(worker, getWorkerStatusFn, getWorkerIdFn, isWorkerRunningFn,
   };
 
   pollWorkerState(workerId, callback);
-};
+}
