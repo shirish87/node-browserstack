@@ -12,22 +12,14 @@ if (!username || !password) {
 }
 
 describe('Screenshot API', function() {
-  this.timeout(10000);
+  this.timeout(300000); // 300s
 
   var client;
-  var workers = [];
 
   beforeEach(function() {
     client = BrowserStack.createScreenshotClient({
       username: username,
       password: password
-    });
-  });
-
-  afterEach(function(done) {
-    util.terminateWorkers(client, workers, function() {
-      workers = [];
-      done();
     });
   });
 
@@ -39,6 +31,46 @@ describe('Screenshot API', function() {
       browsers.map(util.validateBrowserObject);
 
       done(err);
+    });
+  });
+
+  it('should generate screenshots for multiple browsers', function(done) {
+    var options = {
+      url: 'http://www.example.com',
+      browsers: [ '40.0', '41.0', '42.0' ].map(function(v) {
+        return {
+          os: 'Windows',
+          os_version: '7',
+          browser: 'chrome',
+          browser_version: v
+        };
+      })
+    };
+
+    client.generateScreenshots(options, function(err, job) {
+      should.ifError(err);
+
+      job.should.be.an.Object().and.not.be.empty();
+      job.job_id.should.match(/[a-zA-Z0-9]+/);
+
+      [
+        'quality',
+        'win_res',
+        'wait_time'
+      ].forEach(function(k) {
+        job.should.have.property(k);
+      });
+
+      job.screenshots
+        .map(util.validateBrowserObject)
+        .forEach(function(b) {
+          b.id.should.match(/[a-zA-Z0-9]+/);
+          ['pending', 'queue', 'running'].should.containEql(b.state);
+        });
+
+      util.pollScreenshotWorker(client, job, function(err, isRunning) {
+        done(err || (!isRunning && new Error('worker did not enter running state within timeout')));
+      });
     });
   });
 
